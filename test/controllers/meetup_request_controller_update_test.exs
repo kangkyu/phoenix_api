@@ -1,7 +1,7 @@
 defmodule PhoenixAPI.MeetupRequestControllerUpdateTest do
   use PhoenixAPI.ConnCase
 
-  alias PhoenixAPI.MeetupRequest
+  # alias PhoenixAPI.MeetupRequest
 
   # # ...
   # import Mock
@@ -16,7 +16,9 @@ defmodule PhoenixAPI.MeetupRequestControllerUpdateTest do
   # @valid_attrs %{
   #   endpoint: "/la-fullstack/events",
   #   # endpoint: "/LearnTeachCode/events",
-  #   query: "status=past&desc=true"
+
+  #   query: "status=past"
+  #   # query: "status=past&desc=true"
   # }
 
   # @invalid_attrs %{}

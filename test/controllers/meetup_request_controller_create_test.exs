@@ -17,8 +17,25 @@ defmodule PhoenixAPI.MeetupRequestControllerCreateTest do
   @valid_attrs %{
     endpoint: "/la-fullstack/events",
     # endpoint: "/LearnTeachCode/events",
-    query: "status=past&desc=true"
+
+    query: "status=past"
+    # query: "status=past&desc=true"
   }
+
+  @filtered_view %{
+    filter: %{stop_if_date_greater_than: 1474507800000},
+    expected: %{
+      length: 14,
+      id: %{first: "xcmqrlyvfbfc", last: "vmtswlyvmbkb"}
+    }
+  }
+
+  # @stop_if_date_less_than 1476927000000
+  # @expected_filtered_data %{length: 7, first_id: "xckjbmyvnbjc", last_id: "236808643"}
+  # # @expected_filtered_data %{length: 7, first_id: "236808643", last_id: "xckjbmyvnbjc"}
+
+  @expected_data_length if @no_mock, do: 26, else: 26 # The count of number of events.
+  @expected_first_id "xcmqrlyvfbfc" # The first event, chrono ordered. This shouldn't change.
 
   @invalid_attrs %{}
 
@@ -26,14 +43,22 @@ defmodule PhoenixAPI.MeetupRequestControllerCreateTest do
     {:ok, conn: put_req_header(conn, "accept", "application/json")}
   end
 
-  describe "** when resource does not exist **" do
+  describe "\b: when resource doesn't exist" do
     defp assert_valid_request do
       got = MeetupRequest |> Ecto.Query.first |> Repo.one
       assert got.endpoint == @valid_attrs.endpoint
+
+      data = Poison.decode! got.response
+      # If this fails, check if a new item to the list (meetup event) has been
+      #   added. Update the @expected_data_length accordingly.
+      assert length(data) == @expected_data_length
+
+      assert (data |> List.first |> Map.fetch!("id")) == @expected_first_id
+
       assert URI.decode_query(got.query) == URI.decode_query(@valid_attrs.query)
     end
 
-    @title "creates and renders resource when data is valid"
+    @title "\b, when data is valid> creates & renders resource"
     if @no_mock do
       test @title, %{conn: conn} do
         conn = post conn, meetup_request_path(conn, :create), meetup_request: @valid_attrs
@@ -45,24 +70,42 @@ defmodule PhoenixAPI.MeetupRequestControllerCreateTest do
         # assert Repo.get_by(MeetupRequest, @valid_attrs)
       end
     else
-      test_with_mock(
-        @title, %{conn: conn},
-        HTTPotion, [], [get: fn(url) -> HTTPotionMock.get(url) end]
-      ) do
-        conn = post conn, meetup_request_path(conn, :create), meetup_request: @valid_attrs
+      setup %{conn: conn} do
+        with_mock HTTPotion, [get: fn(url) -> HTTPotionMock.get(url) end] do
+          {:ok, conn: post(
+            conn,
+            meetup_request_path(conn, :create),
+            meetup_request: @valid_attrs
+          )}
+        end
+      end
+
+      test @title <> " - status 201", %{conn: conn} do
         assert json_response(conn, 201)["data"]["id"]
+      end
+
+      test @title <> " - data received is valid" do
         assert_valid_request()
       end
+
+      # test_with_mock(
+      #   @title, %{conn: conn},
+      #   HTTPotion, [], [get: fn(url) -> HTTPotionMock.get(url) end]
+      # ) do
+      #   conn = post conn, meetup_request_path(conn, :create), meetup_request: @valid_attrs
+      #   assert json_response(conn, 201)["data"]["id"]
+      #   assert_valid_request()
+      # end
     end
 
-    test "does not create resource and renders errors when data is invalid", %{conn: conn} do
+    test "\b, when data is invalid> doesn't create resource & renders errors", %{conn: conn} do
       conn = post conn, meetup_request_path(conn, :create), meetup_request: @invalid_attrs
       assert json_response(conn, 422)["errors"] != %{}
     end
   end
 
   # ... always mocked because we're not checking if the data is correct or not.
-  describe "** when resource already exists **" do
+  describe "\b: when resource already exists" do
     setup do
       {:ok, agent} = Agent.start_link fn -> 0 end
       {:ok, agent: agent}
@@ -78,7 +121,7 @@ defmodule PhoenixAPI.MeetupRequestControllerCreateTest do
     end
 
     test_with_mock(
-      "it should not create the same resource",
+      "\b> it shouldn't create resource",
       %{conn: conn, agent: agent},
       HTTPotion,
       [],
@@ -97,5 +140,60 @@ defmodule PhoenixAPI.MeetupRequestControllerCreateTest do
       count = Repo.all(MeetupRequest) |> length
       assert count == 1
     end
+  end
+
+  # ... should be OK to always be mocked. The non-mocked tests above should suffice.
+  describe "\b: retrieving resource with view filters (stop at date)" do
+    setup %{conn: conn} do
+      with_mock HTTPotion, [get: fn(url) -> HTTPotionMock.get(url) end] do
+        conn = post(
+          conn,
+          meetup_request_path(conn, :create),
+
+          meetup_request: Map.merge(@valid_attrs, @filtered_view.filter)
+
+          # meetup_request: Map.merge(@valid_attrs, %{
+          #   stop_if_date_less_than: @stop_if_date_less_than,
+          #   desc: true
+          # })
+        )
+
+        data = json_response(conn, 201)["data"]["data"] |> Poison.decode!
+
+        {:ok, data: data}
+      end
+    end
+
+    # setup %{conn: conn} do
+    #   with_mock HTTPotion, [get: fn(url) -> HTTPotionMock.get(url) end] do
+    #     {:ok, conn: post(
+    #       conn,
+    #       meetup_request_path(conn, :create),
+    #       meetup_request: Map.merge(@valid_attrs, %{
+    #         stop_if_date_less_than: @stop_if_date_less_than
+    #       })
+    #     )}
+    #   end
+    # end
+
+    test "\b data (events) count == #{@filtered_view.expected.length}", %{data: data} do
+      assert length(data) == @filtered_view.expected.length
+    end
+
+    test "\b first data ID == #{@filtered_view.expected.id.first}", %{data: data} do
+      assert (data |> List.first |> Map.fetch!("id")) == @filtered_view.expected.id.first
+    end
+
+    test "\b last data ID == #{@filtered_view.expected.id.last}", %{data: data} do
+      assert (data |> List.last |> Map.fetch!("id")) == @filtered_view.expected.id.last
+    end
+
+    # test "\b first data ID == #{@expected_filtered_data.first_id}", %{data: data} do
+    #   assert (data |> List.first |> Map.fetch!("id")) == @expected_filtered_data.first_id
+    # end
+
+    # test "\b last data ID == #{@expected_filtered_data.last_id}", %{data: data} do
+    #   assert (data |> List.last |> Map.fetch!("id")) == @expected_filtered_data.last_id
+    # end
   end
 end

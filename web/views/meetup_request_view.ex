@@ -11,7 +11,27 @@ defmodule PhoenixAPI.MeetupRequestView do
     meetup_request = params.meetup_request
 
     data = if meetup_request.response do
-      filter_response_data(meetup_request.response, params[:filter] || %{})
+      filter_response_data(
+        meetup_request.response, params[:filter] || %{}
+      )
+
+      # filter = params[:filter]
+
+      # if filter do
+      #   result = filter_response_data(meetup_request.response, filter || %{})
+      #   ordered = if filter.desc, do: Enum.reverse result, else: result
+      #   Poison.decode! ordered
+      # else
+      #   meetup_request.response
+      # end
+
+      # # result = filter_response_data(meetup_request.response, filter || %{})
+
+      # # # result = filter_response_data(
+      # # #   meetup_request.response, params[:filter] || %{}
+      # # # )
+
+      # # if filter && filter.desc, do: Enum.reverse result, else: result
     else
       nil
     end
@@ -56,7 +76,14 @@ defmodule PhoenixAPI.MeetupRequestView do
       thing
     end
 
-    Poison.encode! filtered_list_of_things
+    ordered = if filter.desc do
+      Enum.reverse filtered_list_of_things
+    else
+      filtered_list_of_things
+    end
+
+    Poison.encode! ordered
+    # Poison.encode! filtered_list_of_things
   end
   # ... END EDITS
 end

@@ -12,10 +12,12 @@ defmodule PhoenixAPI.MeetupRequestController do
   defp extract_view_filter_from(params) do
     stop_if_date_less_than = params["stop_if_date_less_than"]
     stop_if_date_greater_than = params["stop_if_date_greater_than"]
+    desc = params["desc"]
 
     %{
       stop_if_date_less_than: stop_if_date_less_than,
-      stop_if_date_greater_than: stop_if_date_greater_than
+      stop_if_date_greater_than: stop_if_date_greater_than,
+      desc: desc
     }
   end
 

@@ -14,12 +14,13 @@ defmodule PhoenixAPI.MeetupRequestTest do
 
   @valid_attrs %{
     endpoint: "/la-fullstack/events",
-    query: %{"status" => "past", "desc" => "true"} |> URI.encode_query,
+    query: %{"status" => "past"} |> URI.encode_query,
+    # query: %{"status" => "past", "desc" => "true"} |> URI.encode_query,
     response: "some content"
   }
   @invalid_attrs %{}
 
-  describe "** changeset with valid attributes **" do
+  describe "\b: changeset with valid attributes" do
     defp changeset do
       %MeetupRequest{}
         |> initial(@valid_attrs)
@@ -27,9 +28,9 @@ defmodule PhoenixAPI.MeetupRequestTest do
     end
 
     if @no_mock do
-      test "not mocked", do: assert changeset().valid?
+      test "> not mocked", do: assert changeset().valid?
     else
-      test_with_mock "mocked", HTTPotion, [
+      test_with_mock "> mocked", HTTPotion, [
         get: fn(url) -> HTTPotionMock.get(url) end]
       do
         assert changeset().valid?
