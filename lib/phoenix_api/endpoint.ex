@@ -36,5 +36,8 @@ defmodule PhoenixAPI.Endpoint do
     key: "_phoenix_api_key",
     signing_salt: "zv/+uhqP"
 
+  # ...
+  plug CORSPlug, origin: ["http://localhost:3000"]
+
   plug PhoenixAPI.Router
 end
