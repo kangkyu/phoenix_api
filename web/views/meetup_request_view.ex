@@ -53,47 +53,10 @@ defmodule PhoenixAPI.MeetupRequestView do
         (unix_time < stop_if_date_greater_than)
       )
     do
-      # For DEBUGGING, delete later
-      # utc_offset = div(Map.fetch!(thing, "utc_offset"), 1000)
-      # unix_time = Map.fetch!(thing, "time")
-      # date_time = DateTime.from_unix!(div(unix_time, 1000) + utc_offset)
-      # # zone = %{time_zone: "America/Los_Angeles", zone_abbr: "PST"}
-      # zone = %{time_zone: "", zone_abbr: ""}
-      # date_time = date_time |> Map.merge(zone)
-      # title = thing["name"]
-
-      # IO.inspect([
-      #   # thing
-      #   unix_time: unix_time,
-      #   # stop_before: stop_before,
-      #   # stop_after: stop_after,
-      #   title: title,
-      #   # title: Map.fetch!(thing, "name"),
-      #   date: DateTime.to_string(date_time)
-      # ],
-      #   width: 140
-      # )
-
       thing
     end
 
     Poison.encode! filtered_list_of_things
   end
-
-  # # ... original
-  # def render("index.json", %{meetup_requests: meetup_requests}) do
-  #   %{data: render_many(meetup_requests, PhoenixAPI.MeetupRequestView, "meetup_request.json")}
-  # end
-
-  # def render("show.json", %{meetup_request: meetup_request}) do
-  #   %{data: render_one(meetup_request, PhoenixAPI.MeetupRequestView, "meetup_request.json")}
-  # end
-
-  # def render("meetup_request.json", %{meetup_request: meetup_request}) do
-  #   %{id: meetup_request.id,
-  #     endpoint: meetup_request.endpoint,
-  #     query: meetup_request.query,
-  #     response: meetup_request.response}
-  # end
   # ... END EDITS
 end

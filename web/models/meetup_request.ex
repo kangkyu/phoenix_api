@@ -61,12 +61,5 @@ defmodule PhoenixAPI.MeetupRequest do
       endpoint: changes.endpoint, query: changes.query
     })
   end
-
-  # # ... original
-  # def changeset(struct, params \\ %{}) do
-  #   struct
-  #   |> cast(params, [:endpoint, :query, :response])
-  #   |> validate_required([:endpoint, :query, :response])
-  # end
   # ... END EDITS
 end

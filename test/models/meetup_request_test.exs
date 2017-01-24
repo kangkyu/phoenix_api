@@ -41,19 +41,5 @@ defmodule PhoenixAPI.MeetupRequestTest do
     changeset = %MeetupRequest{} |> initial(@invalid_attrs)
     refute changeset.valid?
   end
-
-  # # ... original
-  # @valid_attrs %{endpoint: "some content", query: "some content", response: "some content"}
-  # @invalid_attrs %{}
-
-  # test "changeset with valid attributes" do
-  #   changeset = MeetupRequest.changeset(%MeetupRequest{}, @valid_attrs)
-  #   assert changeset.valid?
-  # end
-
-  # test "changeset with invalid attributes" do
-  #   changeset = MeetupRequest.changeset(%MeetupRequest{}, @invalid_attrs)
-  #   refute changeset.valid?
-  # end
   # ... END EDITS
 end

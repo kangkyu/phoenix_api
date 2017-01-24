@@ -1,0 +1,332 @@
+
+<Phoenix API - API pass-through app>
+
+<Sources>
+
+https://robots.thoughtbot.com/building-a-phoenix-json-api
+
+
+<Gotchas>
+
+Heroku Environment Variables:
+  https://medium.com/@chibicode/some-gotchas-when-deploying-a-elixir-phoenix-app-to-heroku-6ae668d1667d#.yf770qu4s
+  # For heroku
+  heroku config:set SOME_KEY="foo"
+
+  # In prod.exs
+  config my_app, :some_key, System.get_env("SOME_KEY")
+
+  # In application code
+  Application.get_env(:my_app, :some_key) # nil
+
+  https://github.com/HashNuke/heroku-buildpack-elixir#specifying-config-vars-to-export-at-compile-time
+  elixir_buildpack.config:
+  config_vars_to_export=(SOME_API_KEY SOME_OTHER_KEY)
+
+  # In application code
+  Application.get_env(:my_app, :some_key) # not nil, whatever is the value of the env var
+
+
+<Elixir Setup>
+[sh]
+  mix local.hex # Hex =~ RubyGems
+  mix archive.install https://github.com/phoenixframework/archives/raw/master/phoenix_new.ez
+[\sh]
+
+
+<Generate App>
+[sh]
+  # Normal
+  mix phoenix.new --module NameOfBaseModule app_name
+
+  # API
+  mix phoenix.new --no-html --no-brunch --module NameOfBaseModule app_name
+
+  #
+  mix phoenix.new --no-html --no-brunch --module PhoenixAPI phoenix_api
+[\sh]
+
+
+<Security>
+
+File .gitignore:
+  /config/SECRET_DO_NOT_GIT.exs => .gitignore
+
+Prepend to config/{dev,test}.exs:
+  # ... put in front so it can be overridden if need be.
+  import_config "SECRET_DO_NOT_GIT.exs"
+
+CORS Support:
+  1. mix.exs <= defp deps do <= `{:cors_plug, "~> 1.1"}`
+  2. `mix deps.get`
+  3. File lib/app_name/endpoint.ex, enter before `plug PhoenixAPI.Router`:
+    # ...
+    plug CORSPlug, origin: ["https://list-of-domains.org", "http://localhost:3000"]
+
+
+<Migration>
+HACK - change PostgreSQL user from postgres to phoenix:
+  Make sure "phoenix" or other PG user/role name exists and has create DB privilege.
+    See the script in this dir:
+      tools/postgres-to-phoenix.bash
+
+Create DB and Migrate:
+  mix ecto.create # if your DB doesn't exist yet.
+  mix ecto.migrate # not sure if needed if you executed .create.
+
+
+<Optional: Run the Server>
+  mix phoenix.server
+
+
+<Essential Packages>
+ExMachina - a factory/test data creator not unlike FactoryGirl:
+  1. mix.exs <= defp deps <= append to list: `{:ex_machina, "~> version", only: :test}`
+  2. test/test_helper.exs <= prepend to file (before `ExUnit.start`: `{:ok, _} = Application.ensure_all_started(:ex_machina)`
+  3. [sh]mix deps.get[\sh]
+
+  # Doesn't seem to be needed
+  4. test/support/conn_case.ex <= using do quote do <= add: `import AppBaseModule.Factory`
+  See https://github.com/thoughtbot/ex_machina, Usage in a test
+  defmod... ExampleModuleDef
+    # You can also import this in your MyApp.ConnCase if using Phoenix
+    import MyApp.Factory
+    ... = insert ...
+
+
+Faker - https://github.com/igas/faker:
+  1. mix.exs <= defp deps <= append to list: `{:faker, "~> version"}`
+  2. mix.exs <= def application <= append to list: `:faker`
+
+
+Complete List + Others:
+  {:ex_machina, "~> 1.0", only: :test},
+  {:faker, "~> 0.7"},
+
+  # https://github.com/nurugger07/inflex
+  {:inflex, "~> 1.7.0"},
+
+  {:httpotion, "~> 3.0.2"},
+  {:mock, "~> 0.2.0", only: :test}
+
+Get dependencies:
+  [sh]mix deps.get[\sh]
+
+
+<TDD>
+
+Setup:
+  More verbose `mix test` output:
+  [ruby]
+    # test/test_helpers.exs
+    ExUnit.start(trace: true)
+    # ExUnit.start
+  [\ruby]
+
+
+Resource spec/factory:
+  **RED**
+  [ruby]
+    # test/support/factory.ex
+    defmodule AppBaseModule.Factory do
+      use ExMachina.Ecto, repo: AppBaseModule.Repo
+
+      def name_of_base_module_factory do
+        %AppBaseModule.ExampleResource{
+          field1: "Field 1",
+          field2: "Field 2"
+        }
+      end
+    end
+  [\ruby]
+
+  **TEST**
+  [sh]mix test[\sh]
+
+  Output:
+    == Compilation error on file test/support/factory.ex ==
+    ** (CompileError) test/support/factory.ex:6: AppBaseModule.ExampleResource.__struct__/1 is undefined, cannot expand struct AppBaseModule.ExampleResource
+        test/support/factory.ex:5: (module)
+
+  **NEW**
+
+  # https://hexdocs.pm/ecto/Ecto.Migration.html, Field Types, :text
+  # Put :text here for the response.
+  # In the web/model/...exs file, it is mapped to :string, so don't be surprised.
+  mix phoenix.gen.json MeetupRequest meetup_requests endpoint query response:text
+
+  **GREENISH**
+  1. Add a model:
+    [ruby]
+      # web/models/example_resource.ex
+      defmodule AppBaseModule.ExampleResource do
+        use AppBaseModule.Web, :model
+
+        schema "example_resources" do
+          field :field1
+          field :field2
+
+          timestamps()
+        end
+      end
+    [\ruby]
+
+    **RETESTING OUTPUT**
+      ** (CompileError) test/controllers/example_resource_controller_test.exs:7: undefined function insert/1
+
+  2. Create migration:
+    [sh]mix ecto.gen.migration create_example_resources[\sh]
+
+    ... will create...
+    priv/repo/migrations/20170114124011_create_example_resources.exs
+
+    [ruby]
+      defmodule AppBaseModule.Repo.Migrations.CreateExampleResources do
+        use Ecto.Migration
+
+        def change do
+          create table(:example_resources) do
+            add :field1, :string
+            add :field2, :text
+
+            timestamps()
+          end
+        end
+      end
+    [\ruby]
+
+  3. MIGRATE
+    [sh]mix ecto.migrate[\sh]
+
+  4. Add a route:
+    [ruby]
+      # web/router.ex
+
+      defmodule AppBaseModule.Router do
+        # Add this scope for handling API requests
+        scope "/api", ExampleResources do
+          pipe_through :api
+
+          resources "/example_resources", ExampleResourceController, only: [:index, :show] # or except: [:new, :edit]
+        end
+      end
+    [\ruby]
+
+
+Create a controller test:
+  **RED**
+
+  **NEW**
+  See actual controller test file(s)
+
+  [ruby]
+    # test/controllers/example_resource_controller_test.exs
+    defmodule AppBaseModule.ExampleResourceControllerTest do
+      use AppBaseModule.ConnCase
+
+      test "#index renders a list of example_resources" do
+        conn = build_conn()
+        example_resource = insert(:example_resource)
+
+        conn = get conn, example_resource_path(conn, :index)
+
+        assert json_response(conn, 200) == render_json("index.json", example_resources: [example_resource])
+      end
+
+      test "#show renders a single example_resource" do
+        conn = build_conn()
+        example_resource = insert(:example_resource)
+
+        conn = get conn, example_resource_path(conn, :show, example_resource)
+
+        assert json_response(conn, 200) == render_json("show.json", example_resource: example_resource)
+      end
+
+      defp render_json(template, assigns) do
+        assigns = Map.new(assigns)
+
+        AppBaseModule.ExampleResourceView.render(template, assigns)
+        |> Poison.encode!
+        |> Poison.decode!
+      end
+    end
+  [\ruby]
+
+  **GREENISH**
+  1. Add controller:
+  [ruby]
+    # web/controllers/example_resource_controller.ex
+    defmodule AppBaseModule.ExampleResourceController do
+      use AppBaseModule.Web, :controller
+
+      alias AppBaseModule.ExampleResource
+
+      def index(conn, _params) do
+        example_resources = Repo.all(ExampleResource)
+        render conn, "index.json", example_resources: example_resources
+      end
+
+      def show(conn, %{"id" => id}) do
+        example_resource = Repo.get!(ExampleResource, id)
+        render(conn, "show.json", example_resource: example_resource)
+      end
+    end
+  [\ruby]
+
+  2. Add view:
+  [ruby]
+    defmodule AppBaseModule.ExampleResourceView do
+      use AppBaseModule.Web, :view
+
+      def render("index.json", %{example_resources: example_resources}) do
+        %{
+          example_resources: Enum.map(example_resources, &example_resource_json/1)
+        }
+      end
+
+      def render("show.json", %{example_resource: example_resource}) do
+        %{example_resource: example_resource_json(example_resource)}
+      end
+
+      def example_resource_json(example_resource) do
+        %{
+          field1: example_resource.field1,
+          field2: example_resource.field2,
+          inserted_at: example_resource.inserted_at,
+          updated_at: example_resource.updated_at
+        }
+      end
+    end
+  [\ruby]
+
+
+**SHOULD BE GREEN AT THIS POINT**
+
+
+<Miscellaneous>
+
+DB seeding:
+  See the script in this dir:
+    example_app/priv/repo/seeds.exs
+
+
+<...>
+
+mix phoenix.new --no-html --no-brunch --module PhoenixAPI phoenix_api
+mix phoenix.gen.json MeetupRequest meetup_requests endpoint query response
+
+mix phoenix.new --no-html --no-brunch --module PhoenixAPI phoenix_api
+
+# https://hexdocs.pm/ecto/Ecto.Migration.html, Field Types, :text
+# Put :text here for the response.
+# In the web/model/...exs file, it is mapped to :string, so don't be surprised.
+mix phoenix.gen.json MeetupRequest meetup_requests endpoint query response:text \
+  # REMOVE...
+  stop_if_date_less_than:bigint stop_if_date_greater_than:bigint \
+  stop_at
+
+  # !! PROB. remove stop_if_date and implement another thing.
+  # stop_before:integer stop_after:integer stop_at
+
+  # Or stop_(before|after)_date maybe
+  # Or stop_if_date_(less|more)_than

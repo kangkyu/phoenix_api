@@ -58,23 +58,6 @@ defmodule PhoenixAPI.MeetupRequestController do
       end
     end
   end
-
-  # # ... original
-  # def create(conn, %{"meetup_request" => meetup_request_params}) do
-  #   changeset = MeetupRequest.changeset(%MeetupRequest{}, meetup_request_params)
-
-  #   case Repo.insert(changeset) do
-  #     {:ok, meetup_request} ->
-  #       conn
-  #       |> put_status(:created)
-  #       |> put_resp_header("location", meetup_request_path(conn, :show, meetup_request))
-  #       |> render("show.json", meetup_request: meetup_request)
-  #     {:error, changeset} ->
-  #       conn
-  #       |> put_status(:unprocessable_entity)
-  #       |> render(PhoenixAPI.ChangesetView, "error.json", changeset: changeset)
-  #   end
-  # end
   # ... END EDITS
 
   def show(conn, %{"id" => id}) do
