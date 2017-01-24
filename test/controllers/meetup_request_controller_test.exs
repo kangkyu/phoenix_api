@@ -49,6 +49,13 @@ defmodule PhoenixAPI.MeetupRequestControllerTest do
     end
   end
 
+  test "deletes chosen resource", %{conn: conn} do
+    meetup_request = Repo.insert! %MeetupRequest{}
+    conn = delete conn, meetup_request_path(conn, :delete, meetup_request)
+    assert response(conn, 204)
+    refute Repo.get(MeetupRequest, meetup_request.id)
+  end
+
   # # ... EDITED BLOCK
   # describe "** resource creation and update **" do
   #   defp assert_valid_request do
@@ -101,13 +108,6 @@ defmodule PhoenixAPI.MeetupRequestControllerTest do
   #   #   assert json_response(conn, 422)["errors"] != %{}
   #   # end
   # end
-
-  test "deletes chosen resource", %{conn: conn} do
-    meetup_request = Repo.insert! %MeetupRequest{}
-    conn = delete conn, meetup_request_path(conn, :delete, meetup_request)
-    assert response(conn, 204)
-    refute Repo.get(MeetupRequest, meetup_request.id)
-  end
 
   # # ... NEW BLOCK
   # # ... always mocked because we're not checking if the data is correct or not.
