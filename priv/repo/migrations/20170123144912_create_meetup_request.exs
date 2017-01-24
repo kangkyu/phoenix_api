@@ -10,6 +10,7 @@ defmodule PhoenixAPI.Repo.Migrations.CreateMeetupRequest do
       timestamps()
     end
 
+    # ... added
     create index :meetup_requests, [:endpoint]
     create index :meetup_requests, [:query]
   end

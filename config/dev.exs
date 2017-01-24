@@ -1,5 +1,8 @@
 use Mix.Config
 
+# ... put in front so it can be overridden if need be.
+import_config "SECRET_DO_NOT_GIT.exs"
+
 # For development, we disable any cache and enable
 # debugging and code reloading.
 #
