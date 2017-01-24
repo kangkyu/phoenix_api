@@ -15,7 +15,6 @@ defmodule PhoenixAPI.MeetupRequestTest do
   @valid_attrs %{
     endpoint: "/la-fullstack/events",
     query: %{"status" => "past"} |> URI.encode_query,
-    # query: %{"status" => "past", "desc" => "true"} |> URI.encode_query,
     response: "some content"
   }
   @invalid_attrs %{}

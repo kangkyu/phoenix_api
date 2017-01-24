@@ -3,18 +3,6 @@ defmodule PhoenixAPI.MeetupRequestControllerTest do
 
   alias PhoenixAPI.MeetupRequest
 
-  # # ...
-  # # Must be in sync with the URL used in the HTTP mock.
-  # # The query property can be unsorted (alphabetically).
-  # # The model sorts it before inserting in the DB.
-  # @valid_attrs %{
-  #   endpoint: "/la-fullstack/events",
-  #   # endpoint: "/LearnTeachCode/events",
-  #   query: "status=past&desc=true"
-  # }
-  # # ... STOP EDITS
-  # @invalid_attrs %{}
-
   setup %{conn: conn} do
     {:ok, conn: put_req_header(conn, "accept", "application/json")}
   end

@@ -16,9 +16,7 @@ defmodule PhoenixAPI.MeetupRequestControllerUpdateTest do
   # @valid_attrs %{
   #   endpoint: "/la-fullstack/events",
   #   # endpoint: "/LearnTeachCode/events",
-
   #   query: "status=past"
-  #   # query: "status=past&desc=true"
   # }
 
   # @invalid_attrs %{}

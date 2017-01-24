@@ -19,7 +19,6 @@ defmodule PhoenixAPI.MeetupRequestControllerCreateTest do
     # endpoint: "/LearnTeachCode/events",
 
     query: "status=past"
-    # query: "status=past&desc=true"
   }
 
   @filtered_view %{
@@ -29,10 +28,6 @@ defmodule PhoenixAPI.MeetupRequestControllerCreateTest do
       id: %{first: "xcmqrlyvfbfc", last: "vmtswlyvmbkb"}
     }
   }
-
-  # @stop_if_date_less_than 1476927000000
-  # @expected_filtered_data %{length: 7, first_id: "xckjbmyvnbjc", last_id: "236808643"}
-  # # @expected_filtered_data %{length: 7, first_id: "236808643", last_id: "xckjbmyvnbjc"}
 
   @expected_data_length if @no_mock, do: 26, else: 26 # The count of number of events.
   @expected_first_id "xcmqrlyvfbfc" # The first event, chrono ordered. This shouldn't change.
@@ -149,13 +144,7 @@ defmodule PhoenixAPI.MeetupRequestControllerCreateTest do
         conn = post(
           conn,
           meetup_request_path(conn, :create),
-
           meetup_request: Map.merge(@valid_attrs, @filtered_view.filter)
-
-          # meetup_request: Map.merge(@valid_attrs, %{
-          #   stop_if_date_less_than: @stop_if_date_less_than,
-          #   desc: true
-          # })
         )
 
         data = json_response(conn, 201)["data"]["data"] |> Poison.decode!
@@ -163,18 +152,6 @@ defmodule PhoenixAPI.MeetupRequestControllerCreateTest do
         {:ok, data: data}
       end
     end
-
-    # setup %{conn: conn} do
-    #   with_mock HTTPotion, [get: fn(url) -> HTTPotionMock.get(url) end] do
-    #     {:ok, conn: post(
-    #       conn,
-    #       meetup_request_path(conn, :create),
-    #       meetup_request: Map.merge(@valid_attrs, %{
-    #         stop_if_date_less_than: @stop_if_date_less_than
-    #       })
-    #     )}
-    #   end
-    # end
 
     test "\b data (events) count == #{@filtered_view.expected.length}", %{data: data} do
       assert length(data) == @filtered_view.expected.length
@@ -187,13 +164,5 @@ defmodule PhoenixAPI.MeetupRequestControllerCreateTest do
     test "\b last data ID == #{@filtered_view.expected.id.last}", %{data: data} do
       assert (data |> List.last |> Map.fetch!("id")) == @filtered_view.expected.id.last
     end
-
-    # test "\b first data ID == #{@expected_filtered_data.first_id}", %{data: data} do
-    #   assert (data |> List.first |> Map.fetch!("id")) == @expected_filtered_data.first_id
-    # end
-
-    # test "\b last data ID == #{@expected_filtered_data.last_id}", %{data: data} do
-    #   assert (data |> List.last |> Map.fetch!("id")) == @expected_filtered_data.last_id
-    # end
   end
 end
