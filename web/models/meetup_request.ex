@@ -37,7 +37,7 @@ defmodule PhoenixAPI.MeetupRequest do
     def final(initial_changeset) do
       initial_changeset
         |> change(response: Poison.encode!(PhoenixAPI.Response.get(
-          initial_changeset.changes,
+          initial_changeset.changes.endpoint,
           @query_key,
           decode_query(initial_changeset.changes.query)
         )))
