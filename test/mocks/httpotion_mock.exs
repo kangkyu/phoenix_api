@@ -12,7 +12,6 @@ defmodule HTTPotionMock do
   # # URL produced by..
   # @valid_attrs %{
   #   endpoint: "/la-fullstack/events",
-  #   # endpoint: "/LearnTeachCode/events",
   #   query: "status=past"
   # }
   @api_key Application.fetch_env!(:phoenix_api, :secret) |> Keyword.fetch!(:key)

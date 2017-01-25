@@ -16,8 +16,6 @@ defmodule PhoenixAPI.MeetupRequestControllerCreateTest do
   # The model sorts it before inserting in the DB.
   @valid_attrs %{
     endpoint: "/la-fullstack/events",
-    # endpoint: "/LearnTeachCode/events",
-
     query: "status=past"
   }
 
@@ -153,16 +151,57 @@ defmodule PhoenixAPI.MeetupRequestControllerCreateTest do
       end
     end
 
-    test "\b data (events) count == #{@filtered_view.expected.length}", %{data: data} do
+    test "\b> data (events) count == #{@filtered_view.expected.length}", %{data: data} do
       assert length(data) == @filtered_view.expected.length
     end
 
-    test "\b first data ID == #{@filtered_view.expected.id.first}", %{data: data} do
+    test "\b> first ID == #{@filtered_view.expected.id.first}", %{data: data} do
       assert (data |> List.first |> Map.fetch!("id")) == @filtered_view.expected.id.first
     end
 
-    test "\b last data ID == #{@filtered_view.expected.id.last}", %{data: data} do
+    test "\b> last ID == #{@filtered_view.expected.id.last}", %{data: data} do
       assert (data |> List.last |> Map.fetch!("id")) == @filtered_view.expected.id.last
+    end
+  end
+
+  # ... should be OK to always be mocked.
+  #   The bullcrap meetup.com thing.
+  Code.require_file "test/mocks/httpotion_ltc_mock.exs"
+
+  describe "\b: special test for link-next-status-difference" do
+    setup %{conn: conn} do
+      with_mocks([
+        {HTTPotion, [], [get: fn(url) -> HTTPotionLTCMock.get(url) end]},
+        {Process, [:passthrough], [sleep: fn(delay) -> delay end]}
+      ]) do
+        conn = post(
+          conn,
+          meetup_request_path(conn, :create),
+          meetup_request: Map.merge(
+            @valid_attrs, %{endpoint: "/LearnTeachCode/events"}
+          )
+        )
+
+        data = json_response(conn, 201)["data"]["data"] |> Poison.decode!
+
+        {:ok, data: data}
+      end
+    end
+
+    @expected %{
+      length: 331, id: %{first: "220210343", last: "dtxkkmywcbwb" }
+    }
+
+    test "\b> length == #{@expected.length}", %{data: data} do
+      assert length(data) == @expected.length
+    end
+
+    test "\b> first ID == #{@expected.id.first}", %{data: data} do
+      assert (data |> List.first |> Map.fetch!("id")) == @expected.id.first
+    end
+
+    test "\b> last ID == #{@expected.id.last}", %{data: data} do
+      assert (data |> List.last |> Map.fetch!("id")) == @expected.id.last
     end
   end
 end

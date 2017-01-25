@@ -27,9 +27,9 @@ defmodule PhoenixAPI.MeetupRequestTest do
     end
 
     if @no_mock do
-      test "> not mocked", do: assert changeset().valid?
+      test "\b> not mocked", do: assert changeset().valid?
     else
-      test_with_mock "> mocked", HTTPotion, [
+      test_with_mock "\b> mocked", HTTPotion, [
         get: fn(url) -> HTTPotionMock.get(url) end]
       do
         assert changeset().valid?
