@@ -8,6 +8,9 @@ https://robots.thoughtbot.com/building-a-phoenix-json-api
 
 <Gotchas>
 
+DATABASE pool lower if having problems connecting.
+heroku config:set POOL_SIZE=18 # change to lower like 10
+
 Heroku Environment Variables:
   https://medium.com/@chibicode/some-gotchas-when-deploying-a-elixir-phoenix-app-to-heroku-6ae668d1667d#.yf770qu4s
   # For heroku
