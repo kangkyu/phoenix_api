@@ -37,7 +37,11 @@ defmodule PhoenixAPI.Endpoint do
     signing_salt: "zv/+uhqP"
 
   # ...
-  plug CORSPlug, origin: ["http://localhost:3000"]
+  plug CORSPlug, origin: [
+    "http://localhost:3000",
+    "https://server-monitor.github.io"
+    # "https://server-monitor.github.io/temp_timelines/"
+  ]
 
   plug PhoenixAPI.Router
 end
